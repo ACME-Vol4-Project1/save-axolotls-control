@@ -16,7 +16,7 @@ def model_equation(t, y, params=[.09, .005, .001, .004, .001, .005, .001]):
     S, I, T1, T2, R1, R2 = y
     alpha, gamma, eta, zeta, beta, delta, xi = params
 
-    # # introduce periodic seasonal transmission
+    # # introduce periodic seasonal transmission   (not doing this for now, might add back in later)
     # sigma = 6    # amplitude of seasonal variation in transmission
     # alpha = alpha1*(1 + sigma*np.cos(2*np.pi*t))
     
