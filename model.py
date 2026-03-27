@@ -17,7 +17,7 @@ def model_equation(t, y, control1, control2, alpha, gamma, zeta, beta):
         - control2: functions of u1 and u2
         - other parameters: express movement between components
     """
-    S, I, T1, T2, D = y
+    S, I, T1, D = y
     u1, u2 = control1
     K_func, eta_func, xi_func = control2
     K = K_func(u1)
@@ -25,13 +25,12 @@ def model_equation(t, y, control1, control2, alpha, gamma, zeta, beta):
     xi = xi_func(u2, I)
 
     # precompute T1 transition term
-    enter_habitat = zeta*(1 - T2/K) if K > 0 else 0
+    enter_habitat = zeta*(1 - T1/K) if K > 0 else 0
 
     # define transition equations
-    dS = -alpha*I*S + gamma*T1 + eta*T2 - S * enter_habitat
-    dI = alpha*I*S - I * enter_habitat - xi*I - beta*I
+    dS = -alpha*I*S + gamma*T1 + eta*xi*I - S * enter_habitat
+    dI = alpha*I*S - I * enter_habitat - eta*xi*I - beta*I
     dT1 = (I + S) * enter_habitat - gamma*T1
-    dT2 = xi*I - eta*T2 - (1 - eta)*T2
-    dD = beta*I + (1 - eta)*T2
+    dD = beta*I
 
-    return np.array([dS, dI, dT1, dT2, dD])
+    return np.array([dS, dI, dT1, dD])
