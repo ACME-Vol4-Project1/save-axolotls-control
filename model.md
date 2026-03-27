@@ -1,6 +1,6 @@
 # Introduction
 
-## Model 1.1 - Initial Model
+## Model 1.1.1 - Refined Version of Initial Model
 
 We are modeling Green + Golden Bell Frogs in Australia and Chitrid fungus infections. We are trying to use optimal control to prioritize treatment strategies for optimal effect in preserving frog populations. Our controllable parameters are the construction of hotspot shelters ('frog saunas') and the active treatment of infected frogs using antifungal baths.
 
@@ -28,9 +28,9 @@ Resource Allocation (units of `$ / t`)
 ### Equations
 
 $$\begin{align*}
-    \dot{S} &= - \alpha I S + \gamma T_1 + \eta T_2 - \zeta S \left(1 - \frac{S + I}{K}\right)\\
-    \dot{I} &= \alpha I S - \zeta I \left(1 - \frac{S + I}{K}\right) - \xi I - \beta I\\
-    \dot{T_1} &= \zeta (I + S) \left(1 - \frac{S + I}{K}\right) - \gamma T_1\\
+    \dot{S} &= - \alpha I S + \gamma T_1 + \eta T_2 - \zeta S \left(1 - \frac{T_1}{K}\right)\\
+    \dot{I} &= \alpha I S - \zeta I \left(1 - \frac{T_1}{K}\right) - \xi I - \beta I\\
+    \dot{T_1} &= \zeta (I + S) \left(1 - \frac{T_1}{K}\right) - \gamma T_1\\
     \dot{T_2} &= \xi I - \eta T_2 - (1 - \eta) T_2\\
     &= \xi I - T_2\\
     \dot{D} &= \beta I + (1 - \eta) T_2\\
@@ -42,7 +42,7 @@ Controllable Parameters
 
 name | units | description
 --- | --- | --- 
-$K$ | `f` | carrying capacity of frog saunas, a function of $u_1$
+$K$ | `f` | carrying capacity of frog saunas, a function of $u_1$. If $K$ is set to zero, we assume that no frogs are entering saunas through the carrying capacity term to avoid dividing by zero.
 $\xi$ | `1 / t` | rate of transfer into antifungal treatment, a function of $u_2$
 
 Constant Parameters
@@ -59,7 +59,7 @@ $\eta$ | `1` (unitless) | success rate of antifungal bath treatment
 
 name | value | reasoning
 --- | --- | --- 
-$K$ | $\left(\frac{365}{2} u_2\right) \frac{\text{frogs} \cdot \text{days}}{\$}$ | Assuming we are averaging cost over a period of $~7$ years. According to Claude's summary of the sauna paper, 20 frogs were studied in the hot sauna in the sauna study. A Sauna costs $~\$150 \text{ USD}$ to build (rounding up from Claude estimate) and $20 \text{ USD}$ to maintain (rounding up again) every year with a lifetime with maintanance of $~7.5$ years, totaling a cost of $\$40$ USD per year or $\$40/365$ per day if we are considering a seven year period. The number of effective saunas we model should be proportional to the control expenditure rate divided by this cost rate. So the total carrying capacity should be $20 \times u_2 \times (365 / 40 / \$) = (365/2/\$) u_2$.
+$K$ | $\left(\frac{365}{2} u_1\right) \frac{\text{frogs} \cdot \text{days}}{\$}$ | Assuming we are averaging cost over a period of $~7$ years. According to Claude's summary of the sauna paper, 20 frogs were studied in the hot sauna in the sauna study. A Sauna costs $~\$150 \text{ USD}$ to build (rounding up from Claude estimate) and $20 \text{ USD}$ to maintain (rounding up again) every year with a lifetime with maintanance of $~7.5$ years, totaling a cost of $\$40$ USD per year or $\$40/365$ per day if we are considering a seven year period. The number of effective saunas we model should be proportional to the control expenditure rate divided by this cost rate. So the total carrying capacity should be $20 \times u_2 \times (365 / 40 / \$) = (365/2/\$) u_1$.
 $\xi$ | $\frac{1}{I \cdot \$100} u_2$ | Assuming we can catch and treat a frog at the economic rate suggested by Claude. The scaling by $I$ holds the per-frog cost constant no matter the number of frogs. The cost of treatment was about $\$100$ USD per frog. For less economics-driven numbers, see Claude `literature_params_1-0-1.pdf`, these ($0.005 - 0.020 - 0.040 / \text{day}$) numbers were estimated by Claude from field studies. lowest corresponds to monthly surveys, the the highest to active trapping, in SPRING AND SUMMER. In winter, apparently, the frogs are much harder to catch, so we might want to include that in the model at some point.
 $\alpha$ | $10^{-3} / \text{frog} / \text{day}$ | see Claude `literature_params` parameter estimation documents - I chose something near the middle of the general range it gave. This according to Claude doesn't have a direct estimation in the literature for the Green and Golden Bell Frogs, but the frogs get sick from much less fungus than most other frogs, so this infection parameter is on the higher range for all frog species.
 $\beta$ | $0.025 - .002 / \text{day}$ | Winter - Summer estimates from Campbell et al. 2019 as extracted by Claude. Apparently the temperature (winter v summer) has an extremely high impact on the frogs' mortality rate from the fungus. Also, it seems that the Green and Golden Bell frogs have a very low disease-causing threshold of fungus, so they correspondingly have a higher mortality than many other species.  See `literature_params_1-0-1.pdf`.
@@ -69,12 +69,16 @@ $\eta$ | $1$ | Assuming that frog bath actually cures all the frogs without pres
 
 ### Change Log
 
-- Possible changes (prioritized by Henry based on some literature review)
+- Possible changes (prioritized based on some literature review)
+    0. CURRENT MODEL PROBLEMS:
+        - Double check parameters for $T_1$ since we changed the carrying capacity terms
+        - fix the negative number of infected frogs due to treatment pressure. maybe changing to instant treatment would fix this.
     1. Consider adding a seasonal component
     2. Consider removing $T_2$ in favor of 'instant' treatment
     3. Add reproduction and natural death to healthy frogs
     4. Possibly add recovered frogs + immunity from saunas
     5. Possibly add a variable for number of frog saunas
+- Model 1.1.1: Updated model carrying capacity terms to saturate in $T_1$ instead of $S + I$. Need to check parameters to make sure that is still valid. Also fixed incorrect control terms and fixed a dividing by zero issue when carrying capacity is zero.
 - Model 1.1: We decided on in lab on 26 March, also pivoted to Golden and Green Bell frogs specifically.
 - Model 1.0: Emeline's initial push
 
