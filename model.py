@@ -23,7 +23,6 @@ def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta
         - control2: functions of u1 and u2
         - other parameters: express movement between components
     """
-
     S, I, T1, D = y
     u1, u2 = control1
     K_func, eta_func, xi_func = control2
@@ -49,12 +48,18 @@ def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta
 
 ### SYMPY MODEL DEFINITION
 # define model
-def sy_f_full():
-    """Substitutes the dynamic variables into sy_f_simple. This can be used to actually
-    evaluate when parameter values are known, but is much more painful to visualize."""
+def sy_f_full(seasonal=True):
+    """This is the method to generate a full formulation of our model.
+
+    - non-seasonal: autonomous, so we can use infinite horizon LQR
+    - seasonal: non-autonomous, so infinite horizon LQR is no good
+    
+    Substitutes the dynamic variables into sy_f_simple. This can be used to actually
+    evaluate when parameter values are known, but is much more painful to visualize than
+    sy_f_simple."""
     # get dynamic parameter names and values
     names = sy_params_dynamic_names()
-    tosub = sy_params_dynamic()
+    tosub = sy_params_dynamic(seasonal=seasonal)
 
     # get simple f and sub in params
     fsimp = sy_f_simple()
@@ -66,7 +71,7 @@ def sy_f_simple():
     """Uses the sympy definitions below to construct a sympy expression for f(x)
     where x' = f(x) is our ODE. **This expression should only be used to construct
     a dynamic expression if any of the parameters are dynamic, and to double check the equations
-    look right**.
+    look right**. Can be used to construct both seasonal and autonomous versions of the ODE
 
     None of the sympy variables are functions in the output - and some of the parameters
     depend on t, u1, u2, and the state, so if you want to take derivatives or evaluate, sub in the dynamic
@@ -83,33 +88,44 @@ def sy_f_simple():
     ])
     return f
 
-def sy_params_dynamic():
-    """Constructs the dynamic variables in terms of t, u1, and u2.
+def sy_params_dynamic(seasonal=True):
+    """Constructs the dynamic variables in terms of t, state, u1, and u2.
     CHECK sy_params_dynamic_names and ensure these two match!!"""
     t = sy_vars_temporal()
     S, I, T1, D = sy_vars_model()
     u1, u2 = sy_vars_control()
 
-    # construct theta: the time of year.
-    # 0 mod 2pi = summer solstice.
-    # pi mod 2pi = winter solstice.
-    # assume that t=0 is in the summer and years are 365 days
-    theta = 2 * sy.pi * t / 365
-
-    # helper function: generate sinusoidal periodic function
-    sinu = lambda base, omega, phi: base * (1 + omega + sy.cos(theta + phi))
-
-    # construct alpha: periodic sinusoidal
-    alpha = sinu(*sy.symbols("α_0,ω_α,φ_α"))
-
-    # construct beta: periodic sinusoidal
-    beta = sinu(*sy.symbols("β_0,ω_β,φ_β"))
-
+    ### construct non-seasonal parameters
     # construct xi: depends on u2 and I
     xi = u2 / ((I + 50) * 100)
 
     # construct K: depends on u1
     K = 365 * u1 / 2
+
+    ### construct seasonal parameters
+    if seasonal:
+        # construct theta: the time of year.
+        # 0 mod 2pi = summer solstice.
+        # pi mod 2pi = winter solstice.
+        # assume that t=0 is in the summer and years are 365 days
+        theta = 2 * sy.pi * t / 365
+
+        # helper function: generate sinusoidal periodic function
+        sinu = lambda base, omega, phi: base * (1 + omega + sy.cos(theta + phi))
+
+        # construct alpha: periodic sinusoidal
+        alpha = sinu(*sy.symbols("α_0,ω_α,φ_α"))
+
+        # construct beta: periodic sinusoidal
+        beta = sinu(*sy.symbols("β_0,ω_β,φ_β"))
+    
+    else:
+        # theta is a dummy variable at this point that we don't need if 
+        # we're not building a seasonal model, so we can just replace it 
+        # with its own name
+        # honestly, also the same with alpha and beta seeing as they don't
+        # depend on the controls.
+        alpha, beta, theta = sy_params_dynamic_names()[:3]
 
     return [alpha, beta, theta, xi, K]
 
