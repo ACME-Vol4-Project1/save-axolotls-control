@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from scipy.integrate import solve_ivp
 
 # define the model
-def model_equation(t, y, control1, control2, alpha, gamma, zeta, beta):
+def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta, beta_func):
     """ODE equation for our Chytrid fungus model. The y contains the values of
     each compartment at time t, where the compartments are
         - S: susceptible
@@ -13,6 +13,7 @@ def model_equation(t, y, control1, control2, alpha, gamma, zeta, beta):
         - D: deceased
 
         Parameters:
+        - theta: season. 0 mod 2pi indicates peak summer, pi mod 2pi indicates peak winter
         - control1: control parameters u1 and u2 (functions of t)
         - control2: functions of u1 and u2
         - other parameters: express movement between components
@@ -23,6 +24,11 @@ def model_equation(t, y, control1, control2, alpha, gamma, zeta, beta):
     K = K_func(u1)
     eta = eta_func(u2)
     xi = xi_func(u2, I)
+
+    # apply season
+    theta = theta_func(t)
+    alpha = alpha_func(theta)
+    beta = beta_func(theta)
 
     # precompute T1 transition term
     enter_habitat = zeta*(1 - T1/K) if K > 0 else 0
