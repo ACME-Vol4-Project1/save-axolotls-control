@@ -3,6 +3,10 @@ import sympy as sy
 from matplotlib import pyplot as plt
 from scipy.integrate import solve_ivp
 
+# TODO: Update model_equation to inherit from Sympy definition below
+# TODO: Somehow store default parameters for easy access
+
+### NUMERICAL MODEL IMPLEMENTATION
 # define the model
 def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta, beta_func):
     """ODE equation for our Chytrid fungus model. The y contains the values of
@@ -19,6 +23,7 @@ def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta
         - control2: functions of u1 and u2
         - other parameters: express movement between components
     """
+
     S, I, T1, D = y
     u1, u2 = control1
     K_func, eta_func, xi_func = control2
@@ -42,47 +47,7 @@ def model_equation(t, y, theta_func, control1, control2, alpha_func, gamma, zeta
 
     return np.array([dS, dI, dT1, dD])
 
-def model_parameters():
-    alpha, gamma, zeta, beta = .00001, 0.1, 0.15, 0.01 # central time average parameter estimates
-    control2 = K, eta, xi # other parameters
-
-    return 
-
-# SYMPY CODE - DEFINES ODES + MODEL
-# updated to model 1.2
-
-# progress towards lambdifying sympy models
-# # lambdify sympy models
-# class symodel():
-#     def __init__(self):
-#         self.f = lambdify_f()
-
-# def lambdify_f():
-#     """Lambdifies sympy expression for the model"""
-#     t = sy_vars_temporal()
-#     S, I, T1, D = sy_vars_model()
-#     u1, u2 = sy_vars_control()
-#     alpha, beta, theta, xi, K = sy_params_dynamic()
-#     gamma, zeta, eta = sy_params_static()
-
-#     # syf = sympy_f()
-
-#     # generate a function that will evaluate the dynamic params
-
-#     # generate a function that we can pass in everything to raw
-#     flong = sy.lambdify([
-#         t,                              # t
-#         [S, I, T1, D],                  # y
-#         [u1, u2],                       # u
-#         [alpha, beta, theta, xi, K],    # dynamic params
-#         [gamma, zeta, eta]              # static params
-#     ],
-#     syf)
-
-#     # then generate a wrapper function that will compute the dynamic variables first
-
-
-
+### SYMPY MODEL DEFINITION
 # define model
 def sy_f_full():
     """Substitutes the dynamic variables into sy_f_simple. This can be used to actually
