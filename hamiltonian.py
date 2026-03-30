@@ -6,7 +6,7 @@ def hamiltionian_partials(H, x, lam, u):
     as vectors of sympy expressions'''
 
     # make them each Sympy matrices
-    x = xp.Matrix(x)
+    x = sp.Matrix(x)
     lam = sp.Matrix(lam)
 
     # sympy can only do one derivative at a time, stack them into vectors
