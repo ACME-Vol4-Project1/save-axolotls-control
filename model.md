@@ -1,6 +1,6 @@
 # Introduction
 
-## Model 1.3 - Refined Version of Initial Model
+## Model 1.3.1 - Refined Version of Initial Model
 
 We are modeling Green + Golden Bell Frogs in Australia and Chitrid fungus infections. We are trying to use optimal control to prioritize treatment strategies for optimal effect in preserving frog populations. Our controllable parameters are the construction of hotspot shelters ('frog saunas') and the active treatment of infected frogs using antifungal baths.
 
@@ -72,10 +72,12 @@ $\eta$ | $1$ | Assuming that frog bath actually cures all the frogs without pres
 
 ### Change Log
 - Possible changes (prioritized based on some literature review)
-    1. Migrate to a sympy-inheriting ODE definition
+    0. Test and find best parameters in the ODE form with controls zero.
+    1. Consider moving $u_1$ to a discrete, constant parameter or adding a tiny carrying capacity to $T_1$ to avoid dividing by zero in the $u_1 = 0, T_1 \neq 0$ case.
     2. Add reproduction and maybe natural death to healthy frogs
     3. Possibly add recovered frogs + immunity from saunas
     4. Possibly add a variable for number of frog saunas
+- Model 1.3.1: Migrate to a sympy-inheriting ODE definition. Model reworking may be necessary if $u_1 = 0, T_1 \neq 0$ case becomes relevanat in optimal control solutions.
 - Model 1.3: Added a seasonal component (merged 28 March).
 - Model 1.2: Removed the $T_2$ variable to make bath treatment instantaneous. Also changed the parameterization of $\xi$ to give it a saturated and unsaturated regime (easier to catch sick frogs when there are a lot of them, to a point. Harder to catch frogs when there aren't). Also fixed erroneous estimate for $\alpha$ - it was orders of magnitude off by mistake.
 - Model 1.1.1: Updated model carrying capacity terms to saturate in $T_1$ instead of $S + I$. Need to check parameters to make sure that is still valid. Also fixed incorrect control terms and fixed a dividing by zero issue when carrying capacity is zero.
