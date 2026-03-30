@@ -48,8 +48,8 @@ class Model():
         # this situation may produce unstable results, to analyze later.
 
         # Cases 1: u1 is nonzero
-        sy_f_x = sy_f.jacobian(x)
-        sy_f_u = sy_f.jacobian(u)
+        sy_f_x = sy_f.jacobian(x).subs(params)
+        sy_f_u = sy_f.jacobian(u).subs(params)
 
         self._f_case1 = sy.lambdify(
             args,
@@ -71,8 +71,8 @@ class Model():
         params_case2.update({"ζ": 0})
         sy_f_case2 = sy_f.subs(params_case2)
 
-        sy_f_x_case2 = sy_f_case2.jacobian(x)
-        sy_f_u_case2 = sy_f_case2.jacobian(u)
+        sy_f_x_case2 = sy_f_case2.jacobian(x).subs(params_case2)
+        sy_f_u_case2 = sy_f_case2.jacobian(u).subs(params_case2)
 
         self._f_case2 = sy.lambdify(
             args,
