@@ -17,7 +17,7 @@ def default_params(seasonal=True):
     if not seasonal: 
         dynamics = dict(zip(
             sy_params_dynamic_names()[:2], # alpha, beta
-            [0.00001, 0.0135]
+            [0.000035, 0.003]
         ))
         params.update(dynamics)
 
@@ -26,13 +26,15 @@ def default_params(seasonal=True):
         dynamics = dict()
         alphas = dict(zip(
             "α_0,ω_α,φ_α".split(','),
-            [0.000025, 0.5, 1.25 * np.pi]
+            # [0.000025, 0.5, 1.25 * np.pi]
+            [0.000025, 0.5, 1.25 * np.pi] # optimized in test_model.ipynb
         ))
         dynamics.update(alphas)
 
         betas = dict(zip(
             "β_0,ω_β,φ_β".split(','),
-            [0.0035, 0.86, np.pi]
+            # [0.0035, 0.86, np.pi]
+            [0.0020, 0.86, np.pi] # optimized in test_model.ipynb
         ))
         dynamics.update(betas)
 
