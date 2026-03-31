@@ -1,8 +1,8 @@
 import numpy as np
-from naming import sy_params_static, sy_params_dynamic_names 
+from naming import sy_params_static, sy_params_dynamic_names , sy_vars_control
 
 ### Default Parameters
-def default_params(seasonal=True):
+def default_params(seasonal=True, const_u1=None):
     # setup parameter dictionary for sympy substitution
     params = dict()
 
@@ -12,6 +12,13 @@ def default_params(seasonal=True):
         [0.1, 0.15, 1.]
         ))
     params.update(statics)
+
+    # if u_1 is being held constant:
+    if const_u1 is not None:
+        if const_u1 == 0:
+            params["ζ"] = 0 # get rid of carrying capacity term
+        else:
+            params[sy_vars_control()[0]] = const_u1 # fix u_1
 
     # if model is autonomous: add alpha and beta
     if not seasonal: 

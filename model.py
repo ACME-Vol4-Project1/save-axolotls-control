@@ -7,7 +7,7 @@ from copy import deepcopy
 ### Model Class
 # initialize a model with the desired attributes, then we can have class functions with the jacobian, other stuff as functions...
 class Model():
-    def __init__(self, seasonal=True, params=None, no_dead=False):
+    def __init__(self, seasonal=True, params=None, no_dead=False, const_u1=None):
         """An instance of this class provides numeric functions relevant to solving and
         optimizing the model, constructed from the symbolic model representation and with 
         default or overridden parameters.
@@ -15,6 +15,8 @@ class Model():
         Arguments
             seasonal=True: specify if you want the seasonal variant of our model
             params=None or dictionary: use if you want to override any or all of the default parameters.
+            no_dead=False: makes system 3d by removing the D variable which causes issues in the solutions
+            const_u1=None or Float: if not none, makes the control 1d by removing the u_1 variable (the system is nonlinear in it and this may be causing issues)
 
         Returns
             Model object, with the following functions:
@@ -22,8 +24,13 @@ class Model():
                 Model.f_x(t, x, u): compute the jacobian D_xf(t, x, u) for use in LQR
                 Model.f_u(t, x, u): compute the jacobian D_uf(t, x, u) for use in LQR
         """
+        # set internal params
+        self.seasonal = seasonal
+        self.no_dead = no_dead
+        self.const_u1 = const_u1
+
         # get the right params dict, overriding defaults with input dict
-        temp_params = default_params(seasonal=seasonal)
+        temp_params = default_params(seasonal=seasonal, const_u1=const_u1)
         if params is not None:
             temp_params.update(params)
         params = temp_params
@@ -34,7 +41,6 @@ class Model():
             sy_f = sy_f_full(seasonal=seasonal)[:-1, :]
         else:
             sy_f = sy_f_full(seasonal=seasonal)
-        print(type(sy_f), sy_f)
         self.sy_f = sy_f.subs(params)
 
         # now that parameters are filled in, we need to define the desired model functions
@@ -45,7 +51,10 @@ class Model():
         else:
             x = sy_vars_model()
         u = sy_vars_control()
+        if const_u1 is not None:
+            u = [u[1]] # get rid of the u1 control variable if it is being held constant
         args = [t, x, u]
+
 
         # compute f and the jacobian of f, separating cases where
         # 1. u1 is nonzero (the sauna transfer term should be nonzero unless at equilibrium)
@@ -55,50 +64,51 @@ class Model():
         # this situation may produce unstable results, to analyze later.
 
         # Cases 1: u1 is nonzero
-        sy_f_x = sy_f.jacobian(x).subs(params)
-        sy_f_u = sy_f.jacobian(u).subs(params)
+        self.sy_f_x = sy_f.jacobian(x).subs(params)
+        self.sy_f_u = sy_f.jacobian(u).subs(params)
 
         self._f_case1 = sy.lambdify(
             args,
-            sy_f
+            self.sy_f
         )
 
         self._f_x_case1 = sy.lambdify(
             args,
-            sy_f_x,
+            self.sy_f_x,
         )
 
         self._f_u_case1 = sy.lambdify(
             args,
-            sy_f_u,
+            self.sy_f_u,
         )
 
         # Cases 2: T1 and u1 are both zero
-        params_case2 = deepcopy(params)
-        params_case2.update({"ζ": 0})
-        sy_f_case2 = sy_f.subs(params_case2)
+        if const_u1 is None:
+            params_case2 = deepcopy(params)
+            params_case2.update({"ζ": 0})
+            self.sy_f_case2 = sy_f.subs(params_case2)
 
-        sy_f_x_case2 = sy_f_case2.jacobian(x).subs(params_case2)
-        sy_f_u_case2 = sy_f_case2.jacobian(u).subs(params_case2)
+            self.sy_f_x_case2 = self.sy_f_case2.jacobian(x).subs(params_case2)
+            self.sy_f_u_case2 = self.sy_f_case2.jacobian(u).subs(params_case2)
 
-        self._f_case2 = sy.lambdify(
-            args,
-            sy_f_case2
-        )
+            self._f_case2 = sy.lambdify(
+                args,
+                self.sy_f_case2
+            )
 
-        self._f_x_case2 = sy.lambdify(
-            args,
-            sy_f_x_case2,
-        )
+            self._f_x_case2 = sy.lambdify(
+                args,
+                self.sy_f_x_case2,
+            )
 
-        self._f_u_case2 = sy.lambdify(
-            args,
-            sy_f_u_case2,
-        )
+            self._f_u_case2 = sy.lambdify(
+                args,
+                self.sy_f_u_case2,
+            )
 
     def f(self, t, x, u):
         """Compute numerical jacobian of f with respect to x"""
-        if not u[0] == 0:
+        if not u[0] == 0 or self.const_u1 is not None:
             return self._f_case1(t, x, u).ravel() # ravel so it's not a 2d array
         
         elif u[0] == 0 and x[2] == 0:
@@ -109,7 +119,7 @@ class Model():
 
     def f_x(self, t, x, u):
         """Compute numerical jacobian of f with respect to x"""
-        if not u[0] == 0:
+        if not u[0] == 0 or self.const_u1 is not None:
             return self._f_x_case1(t, x, u)
         
         elif u[0] == 0 and x[2] == 0:
@@ -120,7 +130,7 @@ class Model():
 
     def f_u(self, t, x, u):
         """Compute numerical jacobian of f with respect to u"""
-        if not u[0] == 0:
+        if not u[0] == 0 or self.const_u1 is not None:
             return self._f_u_case1(t, x, u)
         
         elif u[0] == 0 and x[2] == 0:
