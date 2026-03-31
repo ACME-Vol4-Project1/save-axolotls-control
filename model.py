@@ -7,7 +7,7 @@ from copy import deepcopy
 ### Model Class
 # initialize a model with the desired attributes, then we can have class functions with the jacobian, other stuff as functions...
 class Model():
-    def __init__(self, seasonal=True, params=None):
+    def __init__(self, seasonal=True, params=None, no_dead=False):
         """An instance of this class provides numeric functions relevant to solving and
         optimizing the model, constructed from the symbolic model representation and with 
         default or overridden parameters.
@@ -30,13 +30,20 @@ class Model():
         self.params = params
 
         # construct sympy expression + fill parameters
-        sy_f = sy_f_full(seasonal=seasonal)
+        if no_dead:
+            sy_f = sy_f_full(seasonal=seasonal)[:-1, :]
+        else:
+            sy_f = sy_f_full(seasonal=seasonal)
+        print(type(sy_f), sy_f)
         self.sy_f = sy_f.subs(params)
 
         # now that parameters are filled in, we need to define the desired model functions
         # get standard names
         t = sy_vars_temporal()
-        x = sy_vars_model()
+        if no_dead:
+            x = sy_vars_model()[:-1]
+        else:
+            x = sy_vars_model()
         u = sy_vars_control()
         args = [t, x, u]
 
