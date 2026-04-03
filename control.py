@@ -213,9 +213,7 @@ class SolveBVP():
             return np.squeeze(np.concatenate((dx, dlam)))
 
         init_x = self.initial_x             
-        init_lam = self.initial_lam              
-
-        print(lam_dot_func(init_x, init_lam))
+        init_lam = self.initial_lam 
 
         # define boundary conditions
         def bc(ya, yb):
