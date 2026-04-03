@@ -32,7 +32,7 @@ def L(x, u, no_dead=True, u1="const"):
 
     if no_dead:
         Q = sy.Matrix([[0, 0, 0],
-                       [0, 3, 0], 
+                       [0, .5, 0], 
                        [0, 0, 0]])
         
     else:
