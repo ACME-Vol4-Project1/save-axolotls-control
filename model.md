@@ -72,8 +72,9 @@ $\eta$ | $1$ | Assuming that frog bath actually cures all the frogs without pres
 
 ### Change Log
 - Possible changes (prioritized based on some literature review)
-    1. Add reproduction and maybe natural death to healthy frogs
-    2. Possibly add recovered frogs + immunity from saunas
+    1. Add frog vaccination + vaccinated compartment. Possibly add recovered frogs + immunity from saunas as well. Probably also need baby frogs adn a spontaneous infection rate
+    2. Maybe consider frog age stages + differential vulnerability
+    3. Add reproduction and maybe natural death to healthy frogs
 - Model 1.3.2: Add option `const_u1` for $u_1$ to be a constant tunable parameter rather than a control variable. May simplify the system for control problems. Should still impact the cost functional as if it were a function, but will require other methods to optimize.
 - Model 1.3.1: Migrate to a sympy-inheriting ODE definition. Model reworking may be necessary if $u_1 = 0, T_1 \neq 0$ case becomes relevanat in optimal control solutions.
 - Model 1.3: Added a seasonal component (merged 28 March).
