@@ -143,7 +143,7 @@ class SolveBVP():
         hamiltonian = H(self.f, lagrangian, lam)
 
         # get hamilton's equations
-        x_dot, lam_dot, stationary = hamiltionian_partials()
+        x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, u)    # TODO: Add check if u1_const, figure out how to modify it
 
 #__________________________________________________
 # FOR LQR
