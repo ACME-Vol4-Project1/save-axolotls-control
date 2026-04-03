@@ -6,7 +6,7 @@ from naming import *                            # For the model definitions
 from model import sy_params_dynamic, sy_f_simple
 # from model import sy_f_full as f              # Defining them both here for the time being
 
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, solve_bvp
 from scipy import linalg as la
 import model as m
 
@@ -123,40 +123,113 @@ def sy_f_simple_no_dead():
 class SolveBVP():
     """A class that uses solve_bvp to solve the axolotl problem"""
 
-    def __init__(self, const_params, f, no_dead=True, u1_const=150):
+    def __init__(self, const_params, f, tf, initial_vals_x, initial_vals_lam=np.ones(3), no_dead=True, u1_const=150):
         """
         Parameters:
         - const_params (dict): dictionary of parameters (gamma, zeta, eta, alpha, beta)
         - f (function): sympy representation of the state evolution equation
+        - tf (int): final time step
+        - initial_vals (list): list of initial values for solve_bvp
         - no_dead (bool, opt): indicates whether to include the dead class
         - u1_const (float, opt): if present, indicates that the u1 control is constant and gives its value
         """
         self.const_params = const_params
-        self.no_dead = no_dead
         self.f = f
+        self.tf = tf
+        self.initial_x, self.initial_lam = initial_vals_x, initial_vals_lam
+        self.no_dead = no_dead
         self.u1_const = u1_const
 
         # if u1_const, update constant parameters dictionary
-        if u1_const:
+        if not u1_const is None:
             self.const_params["u1"] = u1_const
 
     def _setup(self):
-        """set up the problem"""
+        """set up the problem
+        
+        Returns:
+        - x_dot2: state transition equation with control substituted using PMP
+        - lam_dot2: state transition equation with control substituted using PMP
+        - u_symbolic: symbolic representation of u (used in substitutions)"""
         # define variables, lagrangian, and hamiltonian
         x, u, lam = define_variables()
         lagrangian = L(x, u)
         hamiltonian = H(self.f, lagrangian, lam)
 
         # get hamilton's equations
-        if self.u1_const:
+        if not self.u1_const is None:
             x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, sy.Matrix([u[1]]))
-            u_sol = sy.solve(stationary, u[1])
+            u_sol = sy.simplify(sy.solve(stationary, u[1]))
+
+            # u_sol is a dictionary?, so get the value
+            u2 = sy.symbols("u2")
+            u_symbolic = u_sol[u2]
         else:
             # this version needs some work but is probably the wrong model so we'll leave it for now
             x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, u)
-            u_sol = sy.solve(stationary, u)
+            u_sol = sy.simplify(sy.solve(stationary, u))
 
+        # plug in for u
+        x_dot2 = sy.simplify(x_dot.subs(u_sol))
+        lam_dot2 = sy.simplify(lam_dot.subs(u_sol))
+
+        # store sympy variables as attributes
+        self.x, self.u, self.lam = x, u, lam
+        return x_dot2, lam_dot2, u_symbolic
+
+    def _substitutions(self):
+        """Convert sympy expressions to lambda functions
         
+        Returns:
+        - x_dot_func
+        - lam_dot_func
+        - u_func
+        """
+        x_dot, lam_dot, u = self._setup()
+
+        # substitute in constant parameters
+        x_dot_subs = x_dot.subs(self.const_params)
+        lam_dot_subs = lam_dot.subs(self.const_params)
+        u_subs = u.subs(self.const_params)
+
+        # create lambda functions
+        x_dot_func = sy.lambdify((self.x, self.lam), x_dot_subs, modules="numpy")
+        lam_dot_func = sy.lambdify((self.x, self.lam), lam_dot_subs, modules="numpy")
+        u_func = sy.lambdify((self.x, self.lam), u_subs, modules="numpy")
+
+        return x_dot_func, lam_dot_func, u_func
+    
+    def solve(self):
+        """Use solve_bvp to solve the system. Returns whatever solve_bvp returns."""
+        x_dot_func, lam_dot_func, _ = self._substitutions()
+
+        def ode(t, y):
+            """Define an ode where the first n elements are the derivative the compartments
+            and the last n elements are the derivative of the lambdas"""
+            n = int(len(y)/2)                       # should work with or without the dead term
+            dx = x_dot_func(y[:n], y[n:])
+            dlam = lam_dot_func(y[:n], y[n:])
+
+            return np.squeeze(np.concatenate((dx, dlam)))
+
+        init_x = self.initial_x             
+        init_lam = self.initial_lam              
+
+        print(lam_dot_func(init_x, init_lam))
+
+        # define boundary conditions
+        def bc(ya, yb):
+            return np.squeeze(np.concatenate((ya[:len(init_x)] - init_x, yb[len(init_x):])))
+
+        # get other necessary things
+        tf = self.tf
+        t_vals = np.linspace(0, tf, tf)
+        final_x_guess = np.array([150, 200, 150])   # TODO: check this out to see if it is necessary/how much it changes things
+        state_init = np.array([np.linspace(init_x[i], final_x_guess[i], len(t_vals)) for i in range(len(init_x))])
+        costate_init = np.array([np.linspace(.1, .0001, len(init_x)) for _ in range(len(t_vals))]).T   # from Claude, suggested linear decay for costate initial conditions
+        y_init = np.vstack((state_init, costate_init))
+
+        return solve_bvp(ode, bc, t_vals, y_init)
 
 
 class SolveLQR():
