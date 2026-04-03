@@ -112,3 +112,35 @@ def sy_f_simple_no_dead():
     ])
     
     return f
+
+
+### DEFINE CLASSES FOR DIFFERENT METHODS
+
+class SolveBVP():
+    """A class that uses solve_bvp to solve the axolotl problem"""
+
+    def __init__(self, const_params, f, no_dead=True, u1_const=150):
+        """
+        Parameters:
+        - const_params (dict): dictionary of parameters (gamma, zeta, eta, alpha, beta)
+        - f (function): sympy representation of the state evolution equation
+        - no_dead (bool, opt): indicates whether to include the dead class
+        - u1_const (float, opt): if present, indicates that the u1 control is constant and gives its value
+        """
+        self.const_params = const_params
+        self.no_dead = no_dead
+        self.f = f
+
+        # if u1_const, update constant parameters dictionary
+        if u1_const:
+            self.const_params["u1"] = u1_const
+
+    def _setup(self):
+        """set up the problem"""
+        # define variables, lagrangian, and hamiltonian
+        x, u, lam = define_variables()
+        lagrangian = L(x, u)
+        hamiltonian = H(self.f, lagrangian, lam)
+
+        # get hamilton's equations
+        x_dot, lam_dot, stationary = hamiltionian_partials()
