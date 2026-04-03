@@ -145,9 +145,44 @@ class SolveBVP():
         # get hamilton's equations
         x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, u)    # TODO: Add check if u1_const, figure out how to modify it
 
-#__________________________________________________
-# FOR LQR
-#________________________________
+
+class SolveLQR():
+    """A class that uses solve_bvp to solve the axolotl problem"""
+
+    def __init__(self, const_params, f, no_dead=True, u1_const=0.1):
+        """
+        Parameters:
+        - const_params (dict): dictionary of parameters (gamma, zeta, eta, alpha, beta)
+        - f (function): sympy representation of the state evolution equation
+        - no_dead (bool, opt): indicates whether to include the dead class
+        - u1_const (float, opt): if present, indicates that the u1 control is constant and gives its value
+        """
+        self.const_params = const_params
+        self.no_dead = no_dead
+        self.f = f
+
+        # if u1_const, update constant parameters dictionary
+        if u1_const:
+            self.const_params["u1"] = u1_const
+
+    def _solve(self, y0=np.array([475, 25, 0]), u0=np.array([1]), tf=5, t_steps=500):
+        """set up the problem"""
+        # define cost functional Matrixes
+        Q = np.array([[0, 0, 0],   # cost of infected frog
+                      [0, 3, 0],
+                      [0, 0, 0]])
+
+        R = np.eye(1)              # cost of control
+
+        # initial conditions
+        y0 = np.array([475, 25, 0])
+        u0 = np.array([1])  # init guess of optimal control on bath spending
+
+        # establish time space
+        tf = 5
+        t_steps = 500
+        t_space = np.linspace(0, tf, t_steps)
+        
 
 
 import numpy as np
@@ -229,20 +264,7 @@ def iterated_lqr(Df_x, Df_u, t_space, x0, u0):
 #        Init Parameters to get plots in the jupyter notebook
 #--------------------------------------------------------------
 
-Q = np.array([[0, 0, 0],   # cost of infected frog
-             [0, 3, 0],
-             [0, 0, 0]])
 
-R = np.eye(1)              # cost of control
-
-# initial conditions
-y0 = np.array([475, 25, 0])
-u0 = np.array([1])  # init guess of optimal control on bath spending
-
-# establish time space
-tf = 5
-t_steps = 500
-t_space = np.linspace(0, tf, t_steps)
 
 # instantiate model object (to be used for linearization)
 model = m.Model(seasonal=False, no_dead=True, const_u1=0.1) # constant sauna maintenance
