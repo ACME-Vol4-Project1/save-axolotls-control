@@ -164,6 +164,7 @@ class SolveLQR():
         self.const_params = const_params
         self.no_dead = no_dead
         self.f = f
+        self.model = m.Model(seasonal=False, no_dead=True, const_u1=u1_const) # constant sauna maintenance
 
         # if u1_const, update constant parameters dictionary
         if u1_const:
@@ -181,7 +182,7 @@ class SolveLQR():
 
         t_space = np.linspace(0, tf, t_steps)
 
-        state_sol, control_sol, t_eval = self.iterated_lqr(lambda t, x, u: model.f_x(t, x, u), lambda t, x, u: model.f_u(t, x, u), t_space, y0, u0)
+        state_sol, control_sol, t_eval = self.iterated_lqr(lambda t, x, u: self.model.f_x(t, x, u), lambda t, x, u: self.model.f_u(t, x, u), t_space, y0, u0)
 
         return state_sol, control_sol, t_eval
 
