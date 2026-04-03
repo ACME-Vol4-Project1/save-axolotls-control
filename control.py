@@ -21,9 +21,14 @@ def define_variables(no_dead=True):
         lam = sy.symbols("l1, l2, l3, l4")
     return x, u, sy.Matrix([lam])
 
-def L(x, u, no_dead=True):
+def L(x, u, no_dead=True, u1="const"):
     """Inside of the cost integral, x.TQx + u.TRu."""
-    R = sy.Identity(2)
+    if u1 == "continuous":
+        R = sy.Identity(2)
+
+    if u1 == "const":
+        R = sy.Identity(1)
+        u = sy.Matrix([u[1]])         # take just u2
 
     if no_dead:
         Q = sy.Matrix([[0, 0, 0],
@@ -35,6 +40,7 @@ def L(x, u, no_dead=True):
                     [0, 0, 0, 0],
                     [0, 0, 0, 0],
                     [0, 0, 0, 1]])
+        
     return x.T@Q@x + u.T@R@u
 
 def H(f, L, lam):
@@ -47,15 +53,15 @@ def hamiltionian_partials(H, x, lam, u):
     as vectors of sympy expressions'''
 
     # make them each Sympy matrices
-    x = sp.Matrix(x)
-    lam = sp.Matrix(lam)
+    x = sy.Matrix(x)
+    lam = sy.Matrix(lam)
 
     # sympy can only do one derivative at a time, stack them into vectors
-    x_dot = sp.Matrix([sp.diff(H, l) for l in lam])     
-    lam_dot = -sp.Matrix([sp.diff(H, xi) for xi in x])
+    x_dot = sy.Matrix([sy.diff(H, l) for l in lam])     
+    lam_dot = -sy.Matrix([sy.diff(H, xi) for xi in x])
 
     # Can't remember if we'll use Dh/Du = 0
-    zero = sp.Matrix([sp.diff(H, ui) for ui in u])
+    zero = sy.Matrix([sy.diff(H, ui) for ui in u])
 
     return x_dot, lam_dot, zero 
 
