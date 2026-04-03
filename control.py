@@ -2,7 +2,6 @@
 
 import numpy as np
 import sympy as sy
-from hamiltonian import hamiltionian_partials
 from naming import *                            # For the model definitions
 from model import sy_params_dynamic, sy_f_simple
 # from model import sy_f_full as f              # Defining them both here for the time being
@@ -41,6 +40,24 @@ def L(x, u, no_dead=True):
 def H(f, L, lam):
     """Define the hamiltonian for a system defined by dx = f, J[u] = int_0^inf L"""
     return lam @ f - L
+
+def hamiltionian_partials(H, x, lam, u):
+    ''' Takes in Sympy expressions for H, x, lam, 
+    returns the state and costate eqns as well as Dh/Du
+    as vectors of sympy expressions'''
+
+    # make them each Sympy matrices
+    x = sp.Matrix(x)
+    lam = sp.Matrix(lam)
+
+    # sympy can only do one derivative at a time, stack them into vectors
+    x_dot = sp.Matrix([sp.diff(H, l) for l in lam])     
+    lam_dot = -sp.Matrix([sp.diff(H, xi) for xi in x])
+
+    # Can't remember if we'll use Dh/Du = 0
+    zero = sp.Matrix([sp.diff(H, ui) for ui in u])
+
+    return x_dot, lam_dot, zero 
 
 
 
