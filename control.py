@@ -134,6 +134,7 @@ class SolveBVP():
         self.const_params = const_params
         self.no_dead = no_dead
         self.f = f
+        self.u1_const = u1_const
 
         # if u1_const, update constant parameters dictionary
         if u1_const:
@@ -147,7 +148,15 @@ class SolveBVP():
         hamiltonian = H(self.f, lagrangian, lam)
 
         # get hamilton's equations
-        x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, u)    # TODO: Add check if u1_const, figure out how to modify it
+        if self.u1_const:
+            x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, sy.Matrix([u[1]]))
+            u_sol = sy.solve(stationary, u[1])
+        else:
+            # this version needs some work but is probably the wrong model so we'll leave it for now
+            x_dot, lam_dot, stationary = hamiltionian_partials(hamiltonian, x, lam, u)
+            u_sol = sy.solve(stationary, u)
+
+        
 
 
 class SolveLQR():
