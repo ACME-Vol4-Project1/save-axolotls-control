@@ -9,6 +9,7 @@ from model import sy_params_dynamic, sy_f_simple
 from scipy.integrate import solve_ivp, solve_bvp
 from scipy import linalg as la
 import model as m
+from matplotlib import pyplot as plt
 
 ### FOR SOLVE_BVP ###
 def define_variables(no_dead=True):
@@ -228,6 +229,34 @@ class SolveBVP():
         y_init = np.vstack((state_init, costate_init))
 
         return solve_bvp(ode, bc, t_vals, y_init)
+    
+    def plot_states(self, show=False):
+        """Make a plot of the solution states"""
+        sol = self.solve()
+        plt.plot(sol.y[0], label="S")
+        plt.plot(sol.y[1], label="I")
+        plt.plot(sol.y[2], label="T1")
+        plt.plot(500 - sol.y[0] - sol.y[1] - sol.y[2], label="D")
+        plt.legend()
+        plt.title("State Solutions")
+        plt.xlabel("Day")
+        plt.ylabel("Number of Frogs")
+
+        if show:
+            plt.show()
+
+    def plot_u(self, show=False):
+        u_function = self._substitutions()[-1]
+        sol = self.solve()
+
+        # plot the control parameters
+        plt.plot(u_function(sol.y[:3], sol.y[3:]))
+        plt.title("Fungal Bath Treatment Spending")
+        plt.xlabel("Days")
+        plt.ylabel("Amount Spent")
+
+        if show:
+            plt.show()
 
 
 class SolveLQR():
