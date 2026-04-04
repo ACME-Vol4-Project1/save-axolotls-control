@@ -230,30 +230,31 @@ class SolveBVP():
 
         return solve_bvp(ode, bc, t_vals, y_init)
     
-    def plot_states(self, show=False):
+    def _plot(self, show=False):
         """Make a plot of the solution states"""
         sol = self.solve()
-        plt.plot(sol.y[0], label="S")
-        plt.plot(sol.y[1], label="I")
-        plt.plot(sol.y[2], label="T1")
-        plt.plot(500 - sol.y[0] - sol.y[1] - sol.y[2], label="D")
-        plt.legend()
-        plt.title("State Solutions")
-        plt.xlabel("Day")
-        plt.ylabel("Number of Frogs")
 
-        if show:
-            plt.show()
+        fig, axs = plt.subplots(2, 1, figsize=(6, 10))
+        axs[0].plot(sol.y[0], label="Susceptible")
+        axs[0].plot(sol.y[1], label="Infected")
+        axs[0].plot(sol.y[2], label="In Treatment 1")
 
-    def plot_u(self, show=False):
+        axs[0].plot(500 - sol.y[0] - sol.y[1] - sol.y[2], label="Death")
+        axs[0].legend()
+        axs[0].set_title("State Solutions")
+        axs[0].set_xlabel("Days")
+        axs[0].set_ylabel("Number of Frogs")
+
         u_function = self._substitutions()[-1]
-        sol = self.solve()
 
         # plot the control parameters
-        plt.plot(u_function(sol.y[:3], sol.y[3:]))
-        plt.title("Fungal Bath Treatment Spending")
-        plt.xlabel("Days")
-        plt.ylabel("Amount Spent")
+        axs[1].plot(u_function(sol.y[:3], sol.y[3:]), label=rf'$u_{2}$: Antifungal Bath Spending')
+        axs[1].set_title('Optimal Control')
+        axs[1].set_xlabel("Days")
+        axs[1].set_ylabel("Amount Spent")
+        axs[1].legend()
+
+        plt.suptitle('solve_bvp Solution with $u_{1} = 0.1$')
 
         if show:
             plt.show()
