@@ -235,11 +235,11 @@ class SolveBVP():
         sol = self.solve()
         plt.plot(sol.y[0], label="S")
         plt.plot(sol.y[1], label="I")
-        plt.plot(sol.y[2], label="T1")
+        plt.plot(sol.y[2], label="T")
         plt.plot(500 - sol.y[0] - sol.y[1] - sol.y[2], label="D")
         plt.legend()
         plt.title("State Solutions")
-        plt.xlabel("Day")
+        plt.xlabel("Days")
         plt.ylabel("Number of Frogs")
 
         if show:
@@ -250,7 +250,7 @@ class SolveBVP():
         sol = self.solve()
 
         # plot the control parameters
-        plt.plot(u_function(sol.y[:3], sol.y[3:]))
+        plt.plot(u_function(sol.y[:3], sol.y[3:]), color="purple")
         plt.title("Fungal Bath Treatment Spending")
         plt.xlabel("Days")
         plt.ylabel("Amount Spent")
