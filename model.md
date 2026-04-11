@@ -113,10 +113,10 @@ Parameters needed:
 
 $$\begin{align*}
     \dot{S_1} &= \delta_1 (\delta_2 + V + I + T) - \varphi S_1 - \alpha_1 S_1 I - \epsilon S_1 - a \delta_2 S_1 - b \zeta \delta_1 (1 - \frac{T}{K - \zeta V}) \\
-    \dot{S_2} &= \varphi S_1 - \alpha_2 S_2 I - \epsilon S_2 - \delta_2 S_2 - \zeta S_2 (1 - \frac{T}{K - \zeta V}) + \gamma (\frac{S_2 I}{V + S_2 + I}) T \\
+    \dot{S_2} &= \varphi S_1 - \alpha_2 S_2 I - \epsilon S_2 - \delta_2 S_2 - \zeta S_2 (1 - \frac{T}{K - \zeta V}) \\ % + \gamma (\frac{S_2 I}{V + S_2 + I}) T (took this term out)
     \dot{I} &= \alpha_2 S_2 I - \beta I + \alpha_1 S_1 I + \epsilon (S_1 + S_2)\\
-    \dot{V} &= \nu V - \delta_2 V - \zeta V \left(1 - \frac{T}{K - \zeta V}\right) + \gamma (\frac{V}{V + S_2 + I})T\\
-    \dot{T} &= \zeta (I + b S_1 + S_2 + V) \left(1 - \frac{T}{K - \zeta V}\right) - \gamma T\\
+    \dot{V} &= \nu V - \delta_2 V - \zeta V \left(1 - \frac{T}{K - \zeta V}\right) \\ % + \gamma (\frac{V}{V + S_2 + I})T
+    \dot{T} &= \zeta (I + b S_1 + S_2 + V) \left(1 - \frac{T}{K - \zeta V}\right) \\ % - \gamma T
     \dot{D} &= a \delta_2 S_1 + \delta_2 S_2 + \beta I\\
 \end{align*}$$
 
@@ -128,7 +128,7 @@ Controllable Parameters (units are not correct yet)
 name | units | description
 --- | --- | --- 
 $K$ | `f` | carrying capacity of frog saunas, a function of $u_1$. If $K$ is set to zero, we assume that no frogs are entering saunas through the carrying capacity term to avoid dividing by zero.
-
+$\nu$ | `f/t` | rate of vaccinated frogs released per timestep, a function of $u_2$
 
 Constant Parameters
 
@@ -142,6 +142,7 @@ $\varphi$ | unknown | rate the frogs grow up (mature)
 $a$ | unknown | scale of frog death for juveniles
 $b$ | unknown | fraction of juveniles that can go to sauna T
 $\beta$ | `1 / t` | death rate from disease
-$\gamma$ | `1 / f / t` | rate that frogs leave sauna
-$\zeta$ | `1 / t` | rate of transfer to sauna T
+$\zeta$ | `1 / t` | rate of transfer to sauna T 
 $\theta$ | `1` (unitless) | radial measure of season
+
+<!-- $\gamma$ | `1 / f / t` | rate that frogs leave sauna -->
