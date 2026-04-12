@@ -265,3 +265,21 @@ def sy_params_dynamic(seasonal=True):
         alpha, beta, theta = sy_params_dynamic_names()[:3]
 
     return [alpha, beta, theta, xi, K]
+
+
+### Helper functions for reintroduction model
+def sy_f_simple2():
+    # import sympy symbolic variables
+    S1, S2, V, I, T, D = sy_vars_model2()
+    eps, d1, a1, a2, beta, theta, nu, K = sy_params_dynamic_names2()
+    d2, gamma, zeta, phi, a, b = sy_params_static2()
+
+    # define transition equations
+    dS1 = d1 * (S2 + V + I + T) - phi * S1 - a1 * S1 * I - eps * S1 - a * d2 * S1 - b * zeta * S1 * (1 - (T / (K - zeta * V)))
+    dS2 = phi * S1 - (a2 * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
+    dI = (a2 * I + eps) * S2 + (a1 * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
+    dV = nu * V - d2 * V - zeta * V * (1 - (T / K)) + gamma * T * (V / (S2 + I + V))                                     # is the current setup a good proxy?
+    dT = zeta * (I + b * S1 + S2 + V) * (1 - (T / K)) - gamma * T
+    dD = a * d2 * S1 + d2 * S2 + beta * I
+
+    return sy.Matrix([dS1, dS2, dI, dV, dT, dD])

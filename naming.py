@@ -26,17 +26,18 @@ def sy_vars_temporal():
 ### modifications for reintroduction model (same temporal and control variables)
 def sy_params_static2():
     """Define parameters that don't depend on control or season
+        - d2: natural death rate of mature frogs
         - gamma: rate of frogs leaving saunas
         - zeta: rate of frogs entering saunas
         - phi: rate of juvenile frogs surviving to maturity
+        - a, b: scaling factor for juvenile frogs death rate and treatment rate
     """
-    return sy.symbols("gamma, zeta, phi")
+    return sy.symbols("d2, gamma, zeta, phi, a, b")
 
 def sy_params_dynamic_names2():
     """Parameters that depend on season or control.
+        - eps: spontaneous infection rate (from water or other species)
         - d1: birth rate
-        - d2: natural death rate of mature frogs
-        - d3: natural death rate of juvenile frogs
         - a1: infection rate of juvenile frogs
         - a2: infection rate of mature frogs
         - beta: death rate from infection
@@ -44,7 +45,7 @@ def sy_params_dynamic_names2():
         - nu: rate of introduction of vaccinated frogs
         - K: carrying capacity of frog saunas
     """
-    return sy.symbols("d1, d2, d3, a1, a2, beta, theta, nu, K")
+    return sy.symbols("eps, d1, a1, a2, beta, theta, nu, K")
 
 def sy_vars_model2():
     """Model compartment names
