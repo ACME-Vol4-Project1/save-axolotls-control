@@ -112,12 +112,12 @@ Parameters needed:
 ### Equations
 
 $$\begin{align*}
-    \dot{S_1} &= \delta_1 (\delta_2 + V + I + T) - \varphi S_1 - \alpha_1 S_1 I - \epsilon S_1 - a \delta_2 S_1 - b \zeta \delta_1 (1 - \frac{T}{K - \zeta V}) \\
-    \dot{S_2} &= \varphi S_1 - \alpha_2 S_2 I - \epsilon S_2 - \delta_2 S_2 - \zeta S_2 (1 - \frac{T}{K - \zeta V}) \\ % + \gamma (\frac{S_2 I}{V + S_2 + I}) T (took this term out)
-    \dot{I} &= \alpha_2 S_2 I - \beta I + \alpha_1 S_1 I + \epsilon (S_1 + S_2)\\
-    \dot{V} &= \nu V - \delta_2 V - \zeta V \left(1 - \frac{T}{K - \zeta V}\right) \\ % + \gamma (\frac{V}{V + S_2 + I})T
-    \dot{T} &= \zeta (I + b S_1 + S_2 + V) \left(1 - \frac{T}{K - \zeta V}\right) \\ % - \gamma T
-    \dot{D} &= a \delta_2 S_1 + \delta_2 S_2 + \beta I\\
+    \dot{S_1} &= \delta_1 (S_2 + V + I + T) - \varphi S_1 - \alpha_1 S_1 I - \epsilon S_1 - a \delta_2 S_1 - b \zeta S_1 \left(1 - \frac{T}{K - \zeta V}\right) \\
+    \dot{S_2} &= \varphi S_1 - \alpha_2 S_2 I - \epsilon S_2 - \delta_2 S_2 - \zeta S_2 \left(1 - \frac{T}{K - \zeta V}\right) + \gamma T \\ % + \gamma (\frac{S_2 I}{V + S_2 + I}) T (took this term out)
+    \dot{I} &= \alpha_2 S_2 I - \beta I + \alpha_1 S_1 I + \epsilon (S_1 + S_2) - \zeta I \left(1 - \frac{T}{K-\zeta V}\right)\\
+    \dot{V} &= \nu V - \delta_2 V \\ % + \gamma (\frac{V}{V + S_2 + I})T
+    \dot{T} &= \zeta (I + b S_1 + S_2) \left(1 - \frac{T}{K - \zeta V}\right) - \gamma T \\ % - \gamma T
+    \dot{D} &= \delta_2 (a S_1 + S_2 + V) + \beta I\\
 \end{align*}$$
 
 
