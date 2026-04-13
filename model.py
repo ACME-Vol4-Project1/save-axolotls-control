@@ -162,6 +162,7 @@ class Model2():
         self.no_dead = no_dead
         self.const_u = const_u
 
+        # set up parameter dictionary
         
 
 ### NUMERICAL MODEL IMPLEMENTATION
