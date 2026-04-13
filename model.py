@@ -140,6 +140,29 @@ class Model():
             raise ValueError("f is nan when $u_1 = 0$ and $T_1 \\neq 0$")
 
 
+class Model2():
+    def __init__(self, seasonal=True, params=None, no_dead=False, const_u=None):
+        """An instance of this class provides numeric functions relevant to solving and
+        optimizing the reintroduction model, constructed from the symbolic model representation 
+        and with default or overridden parameters.
+
+        Arguments
+            seasonal=True: specify if you want the seasonal variant of our model
+            params=None or dictionary: use if you want to override any or all of the default parameters.
+            no_dead=False: makes system 3d by removing the D variable which causes issues in the solutions
+            const_u1=None or Float: if not none, makes the control 1d by removing the u_1 variable (the system is nonlinear in it and this may be causing issues)
+
+        Returns
+            Model object, with the following functions:
+                Model.f(t, x, u): compute x' = f(t, x, u) for use in solve_ivp and other places
+        """
+        # set internal parameters
+        self.seasonal = seasonal
+        self.params = params
+        self.no_dead = no_dead
+        self.const_u = const_u
+
+        
 
 ### NUMERICAL MODEL IMPLEMENTATION
 # define the model
