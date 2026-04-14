@@ -93,3 +93,56 @@ Hotspot shelters:
 Antifungal bath:
 * __https://conbio.onlinelibrary.wiley.com/doi/10.1111/csp2.12762__ study showed treated frogs were 4x more likely to survive first year, reduced Bd infection intensity (It seems like the age of the frog affects their susceptibility; it’s worse in tadpoles. Maybe we should incorporate that?)
 __https://www.int-res.com/journals/dao/articles/dao02813__  treated frogs w/ antifungal drug itraconazole, treated frogs had a higher survival rate after 5 wks. Treatment reduced growth rate of frogs though (weird)
+
+
+## Model 1.4.1: Reintroduction Model
+
+Parameters needed:
+- Natural birth and death rates (birth will be seasonal, death will not be)
+- Distance between summer solstice and peak time
+- Difference in infection rate for juvenile vs adult frogs
+- Vulnerability measure for young frogs? 
+- What age frogs can use the Saunas? tadpoles no but little frogs yes? What percentage? 
+- What is the spontaneous infection rate (environment/other species) ? 
+- Reasonable bounds on u_2, the rate of adding vaccinated frogs
+- $\epsilon , \delta_b, \delta_d $ should depend on t for seasonality, 
+
+
+
+### Equations
+
+$$\begin{align*}
+    \dot{S_1} &= \delta_1 (S_2 + V + I + T) - \varphi S_1 - \alpha_1 S_1 I - \epsilon S_1 - a \delta_2 S_1 - b \zeta S_1 \left(1 - \frac{T}{K - \zeta V}\right) \\
+    \dot{S_2} &= \varphi S_1 - \alpha_2 S_2 I - \epsilon S_2 - \delta_2 S_2 - \zeta S_2 \left(1 - \frac{T}{K - \zeta V}\right) + \gamma T \\ % + \gamma (\frac{S_2 I}{V + S_2 + I}) T (took this term out)
+    \dot{I} &= \alpha_2 S_2 I - \beta I + \alpha_1 S_1 I + \epsilon (S_1 + S_2) - \zeta I \left(1 - \frac{T}{K-\zeta V}\right)\\
+    \dot{V} &= \nu V - \delta_2 V \\ % + \gamma (\frac{V}{V + S_2 + I})T
+    \dot{T} &= \zeta (I + b S_1 + S_2) \left(1 - \frac{T}{K - \zeta V}\right) - \gamma T \\ % - \gamma T
+    \dot{D} &= \delta_2 (a S_1 + S_2 + V) + \beta I\\
+\end{align*}$$
+
+
+### Model Parameters
+
+Controllable Parameters (units are not correct yet)
+
+name | units | description
+--- | --- | --- 
+$K$ | `f` | carrying capacity of frog saunas, a function of $u_1$. If $K$ is set to zero, we assume that no frogs are entering saunas through the carrying capacity term to avoid dividing by zero.
+$\nu$ | `f/t` | rate of vaccinated frogs released per timestep, a function of $u_2$
+
+Constant Parameters
+
+name | units | description
+--- | --- | --- 
+$\alpha_1$ | `1 / f / t` | infection rate for baby frogs
+$\alpha_2$ | `1 / f/ t` | infection rate for adult frogs
+$\delta1$ | unknown | birth rate
+$\delta2$ | unknown | death rate
+$\varphi$ | unknown | rate the frogs grow up (mature)
+$a$ | unknown | scale of frog death for juveniles
+$b$ | unknown | fraction of juveniles that can go to sauna T
+$\beta$ | `1 / t` | death rate from disease
+$\zeta$ | `1 / t` | rate of transfer to sauna T 
+$\theta$ | `1` (unitless) | radial measure of season
+
+<!-- $\gamma$ | `1 / f / t` | rate that frogs leave sauna -->
