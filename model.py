@@ -1,7 +1,7 @@
 import numpy as np
 import sympy as sy
 from naming import *
-from params import default_params
+from params import default_params, default_params2
 from copy import deepcopy
 
 ### Model Class
@@ -158,12 +158,18 @@ class Model2():
         """
         # set internal parameters
         self.seasonal = seasonal
-        self.params = params
         self.no_dead = no_dead
         self.const_u = const_u
 
         # set up parameter dictionary
-        
+        temp_params = default_params2(seasonal=seasonal)
+        if params:
+            temp_params.update(params)
+        self.params = temp_params
+
+        # construct sympy expressions and fill in parameters
+        # TODO: keep working on init (based on the other model __init__)
+
 
 ### NUMERICAL MODEL IMPLEMENTATION
 # define the model
@@ -208,7 +214,7 @@ class Model2():
 
 ### SYMPY MODEL DEFINITION
 # define model
-def sy_f_full(seasonal=True):
+def sy_f_full(seasonal=True, reintroduction=False):
     """This is the method to generate a full formulation of our model.
 
     - non-seasonal: autonomous, so we can use infinite horizon LQR
@@ -218,16 +224,17 @@ def sy_f_full(seasonal=True):
     evaluate when parameter values are known, but is much more painful to visualize than
     sy_f_simple."""
     # get dynamic parameter names and values
-    names = sy_params_dynamic_names()
-    tosub = sy_params_dynamic(seasonal=seasonal)
+    names = sy_params_dynamic_names(reintroduction=reintroduction)
+    tosub = sy_params_dynamic(seasonal=seasonal, reintroduction=reintroduction)
 
     # get simple f and sub in params
-    fsimp = sy_f_simple()
+    fsimp = sy_f_simple(reintroduction=reintroduction)
+
     f = fsimp.subs(dict(zip(names, tosub)))
 
     return f
 
-def sy_f_simple():
+def sy_f_simple(reintroduction=False):
     """Uses the sympy definitions below to construct a sympy expression for f(x)
     where x' = f(x) is our ODE. **This expression should only be used to construct
     a dynamic expression if any of the parameters are dynamic, and to double check the equations
@@ -237,31 +244,57 @@ def sy_f_simple():
     depend on t, u1, u2, and the state, so if you want to take derivatives or evaluate, sub in the dynamic
     expressions first.
     """
-    S, I, T1, D = sy_vars_model()
-    alpha, beta, theta, xi, K = sy_params_dynamic_names()
-    gamma, zeta, eta = sy_params_static()
-    f = sy.Matrix([                 # f = [S', I', T1', D']^T
-        [- alpha * I * S + gamma * T1 + eta * xi * I - zeta * S * (1 - T1 / K)],
-        [alpha * I * S - zeta * I * (1 - T1 / K) - eta * xi * I - beta * I],
-        [zeta * (I + S) * (1 - T1 / K) - gamma * T1],
-        [beta * I]
-    ])
-    
-    return f
+    if reintroduction:
+        # import sympy symbolic variables
+        S1, S2, V, I, T, D = sy_vars_model(reintroduction=True)
+        eps, d1, a1, a2, beta, theta, nu, K = sy_params_dynamic_names(reintroduction=True)
+        d2, gamma, zeta, phi, a, b = sy_params_static2()
 
-def sy_params_dynamic(seasonal=True):
+        # define transition equations
+        dS1 = d1 * (S2 + V + I + T) - phi * S1 - a1 * S1 * I - eps * S1 - a * d2 * S1 - b * zeta * S1 * (1 - (T / (K - zeta * V)))
+        dS2 = phi * S1 - (a2 * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
+        dI = (a2 * I + eps) * S2 + (a1 * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
+        dV = nu * V - d2 * V - zeta * V * (1 - (T / K)) + gamma * T * (V / (S2 + I + V))                                     # is the current setup a good proxy?
+        dT = zeta * (I + b * S1 + S2 + V) * (1 - (T / K)) - gamma * T
+        dD = a * d2 * S1 + d2 * S2 + beta * I
+
+        return sy.Matrix([dS1, dS2, dI, dV, dT, dD])
+    
+    else:
+        S, I, T1, D = sy_vars_model()
+        alpha, beta, theta, xi, K = sy_params_dynamic_names()
+        gamma, zeta, eta = sy_params_static()
+        f = sy.Matrix([                 # f = [S', I', T1', D']^T
+            [- alpha * I * S + gamma * T1 + eta * xi * I - zeta * S * (1 - T1 / K)],
+            [alpha * I * S - zeta * I * (1 - T1 / K) - eta * xi * I - beta * I],
+            [zeta * (I + S) * (1 - T1 / K) - gamma * T1],
+            [beta * I]
+        ])
+        
+        return f
+
+def sy_params_dynamic(seasonal=True, reintroduction=False):
     """Constructs the dynamic variables in terms of t, state, u1, and u2.
     CHECK sy_params_dynamic_names and ensure these two match!!"""
     t = sy_vars_temporal()
-    S, I, T1, D = sy_vars_model()
     u1, u2 = sy_vars_control()
 
-    ### construct non-seasonal parameters
-    # construct xi: depends on u2 and I
-    xi = u2 / ((I + 50) * 100)
+    if reintroduction:
+        S1, S2, V, I, T, D = sy_vars_model(reintroduction=True)
 
-    # construct K: depends on u1
-    K = 365 * u1 / 2
+        ### construct non-seasonal parameters
+        nu = u2 * (1 / 10)  # ($ / t) * (f / $) * carrying capacity term for environment?
+        K = 365 * u1 / 2
+
+    else:
+        S, I, T1, D = sy_vars_model()
+        
+        ### construct non-seasonal parameters
+        # construct xi: depends on u2 and I
+        xi = u2 / ((I + 50) * 100)
+
+        # construct K: depends on u1
+        K = 365 * u1 / 2
 
     ### construct seasonal parameters
     if seasonal:
@@ -273,37 +306,39 @@ def sy_params_dynamic(seasonal=True):
 
         # helper function: generate sinusoidal periodic function
         sinu = lambda base, omega, phi: base * (1 + omega + sy.cos(theta + phi))
+        # base is how high the peak is, omega is the y-shift, phi is the negative center of the peak
 
-        # construct alpha: periodic sinusoidal
-        alpha = sinu(*sy.symbols("α_0,ω_α,φ_α"))
+        if reintroduction:
+            # construct infection rates
+            alpha1 = sinu(*sy.symbols("a1_0, w_a1, p_a1"))
+            alpha2 = sinu(*sy.symbols("a2_0, w_a2, p_a2"))
+            epsilon = sinu(*sy.symbols("e_0, w_e, p_e"))
 
-        # construct beta: periodic sinusoidal
-        beta = sinu(*sy.symbols("β_0,ω_β,φ_β"))
+            # construct birth and death rates
+            delta1 = sinu(*sy.symbols("d_0, w_d, p_d"))
+            beta = sinu(*sy.symbols("b_0, w_b, p_b"))
+
+            return [epsilon, delta1, alpha1, alpha2, beta, theta, nu, K]
+
+        else:
+            # construct alpha: periodic sinusoidal
+            alpha = sinu(*sy.symbols("α_0,ω_α,φ_α"))
+
+            # construct beta: periodic sinusoidal
+            beta = sinu(*sy.symbols("β_0,ω_β,φ_β"))
+
+            return [alpha, beta, theta, xi, K]
     
     else:
-        # theta is a dummy variable at this point that we don't need if 
-        # we're not building a seasonal model, so we can just replace it 
-        # with its own name
-        # honestly, also the same with alpha and beta seeing as they don't
-        # depend on the controls.
-        alpha, beta, theta = sy_params_dynamic_names()[:3]
+        if reintroduction:
+            epsilon, delta1, alpha1, alpha2, beta, theta = sy_params_dynamic_names(reintroduction=True)[:6]
 
-    return [alpha, beta, theta, xi, K]
+        else:
+            # theta is a dummy variable at this point that we don't need if 
+            # we're not building a seasonal model, so we can just replace it 
+            # with its own name
+            # honestly, also the same with alpha and beta seeing as they don't
+            # depend on the controls.
+            alpha, beta, theta = sy_params_dynamic_names()[:3]
+            return [alpha, beta, theta, xi, K]
 
-
-### Helper functions for reintroduction model
-def sy_f_simple2():
-    # import sympy symbolic variables
-    S1, S2, V, I, T, D = sy_vars_model2()
-    eps, d1, a1, a2, beta, theta, nu, K = sy_params_dynamic_names2()
-    d2, gamma, zeta, phi, a, b = sy_params_static2()
-
-    # define transition equations
-    dS1 = d1 * (S2 + V + I + T) - phi * S1 - a1 * S1 * I - eps * S1 - a * d2 * S1 - b * zeta * S1 * (1 - (T / (K - zeta * V)))
-    dS2 = phi * S1 - (a2 * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
-    dI = (a2 * I + eps) * S2 + (a1 * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
-    dV = nu * V - d2 * V - zeta * V * (1 - (T / K)) + gamma * T * (V / (S2 + I + V))                                     # is the current setup a good proxy?
-    dT = zeta * (I + b * S1 + S2 + V) * (1 - (T / K)) - gamma * T
-    dD = a * d2 * S1 + d2 * S2 + beta * I
-
-    return sy.Matrix([dS1, dS2, dI, dV, dT, dD])

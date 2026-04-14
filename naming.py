@@ -1,22 +1,31 @@
 import sympy as sy
 
 # define parameter names
-def sy_params_static():
+def sy_params_static(reintroduction=False):
     """Standardized parameter names: γ,ζ,η"""
-    return sy.symbols("γ,ζ,η")
+    if reintroduction:
+        return sy.symbols("d2, gamma, zeta, phi, a, b")
+    else:
+        return sy.symbols("γ,ζ,η")
 
-def sy_params_dynamic_names():
+def sy_params_dynamic_names(reintroduction=False):
     """Standardized parameter names: α,β,θ,ξ,K"""
-    return sy.symbols("α,β,θ,ξ,K")
+    if reintroduction:
+        return sy.symbols("eps, d1, a1, a2, beta, theta, nu, K")
+    else:
+        return sy.symbols("α,β,θ,ξ,K")
 
 # define variables
 def sy_vars_control():
     """Standardized parameter names: u1, u2"""
     return sy.symbols("u1,u2")
 
-def sy_vars_model():
+def sy_vars_model(reintroduction=False):
     """Standardized parameter names: S,I,T1,D"""
-    return sy.symbols("S,I,T1,D")
+    if reintroduction:
+        return sy.symbols("S1, S2, V, I, T, D")
+    else:
+        return sy.symbols("S,I,T1,D")
 
 def sy_vars_temporal():
     """Standardized parameter names: t"""
