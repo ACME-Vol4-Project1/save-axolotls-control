@@ -82,8 +82,10 @@ class Model():
             self.sy_f_u,
         )
 
+        # NOTE: if const_u1 == 0, zeta is set to 0 in the params file so it is automatically taken care of
+
         # Cases 2: T1 and u1 are both zero
-        if const_u1 is None:
+        if const_u1 is None:    # NOTE: this is called in self.f when u1 = 0 and T = 0 at a specific timestep
             params_case2 = deepcopy(params)
             params_case2.update({"ζ": 0})
             self.sy_f_case2 = sy_f.subs(params_case2)
@@ -108,10 +110,10 @@ class Model():
 
     def f(self, t, x, u):
         """Compute numerical jacobian of f with respect to x"""
-        if not u[0] == 0 or self.const_u1 is not None:
+        if not u[0] == 0 or self.const_u1 is not None:    # when u1 is nonzero at the time step or is fixed
             return self._f_case1(t, x, u).ravel() # ravel so it's not a 2d array
         
-        elif u[0] == 0 and x[2] == 0:
+        elif u[0] == 0 and x[2] == 0:    # when u1 = 0 and T = 0
             return self._f_case2(t, x, u).ravel() # ravel so it's not a 2d array
         
         else:
@@ -141,7 +143,7 @@ class Model():
 
 
 class Model2():
-    def __init__(self, seasonal=True, params=None, no_dead=False, const_u=None):
+    def __init__(self, seasonal=True, params=None, no_dead=False, const_u1=None):
         """An instance of this class provides numeric functions relevant to solving and
         optimizing the reintroduction model, constructed from the symbolic model representation 
         and with default or overridden parameters.
@@ -159,7 +161,7 @@ class Model2():
         # set internal parameters
         self.seasonal = seasonal
         self.no_dead = no_dead
-        self.const_u = const_u
+        self.const_u1 = const_u1
 
         # set up parameter dictionary
         temp_params = default_params2(seasonal=seasonal)
@@ -168,7 +170,102 @@ class Model2():
         self.params = temp_params
 
         # construct sympy expressions and fill in parameters
-        # TODO: keep working on init (based on the other model __init__)
+        if no_dead:
+            sy_f = sy_f_full(seasonal=seasonal, reintroduction=True)[:-1, :]
+        else:
+            sy_f = sy_f_full(seasonal=seasonal, reintroduction=True)
+        self.sy_f = sy_f.subs(params)
+
+        # define model functions
+        t = sy_vars_temporal()
+        if no_dead:
+            x = sy_vars_model2()[:-1]
+        else:
+            x = sy_vars_model2()
+        u = sy_vars_control()
+        if const_u1 is not None:
+            u = [u[1]]   # get rid of the control variable if it is constant
+        args = [t, x, u]
+
+        # compute f and its jacobian, separate cases where u1 is constant or u1 varies
+        # and u1 and T are both zero. Raise exeption when u1 is zero but T is nonzero
+
+        # Case 1: u1 is nonzero
+        self.sy_f_x = sy_f.jacobian(x).subs(params)    # get jacobians
+        self.sy_f_u = sy_f.jacobian(u).subs(params)
+
+        self._f_case1 = sy.lambdify(
+            args,
+            self.sy_f
+        )
+
+        self._f_x_case1 = sy.lambdify(
+            args,
+            self.sy_f_x
+        )
+
+        self._f_u_case1 = sy.lambdify(
+            args,
+            self.sy_f_u
+        )
+
+        # Case 2: T1 and u1 are both zero (when u1 is not constant)
+        if const_u1 is None:
+            params_case2 = deepcopy(params)
+            params_case2.update({"zeta": 0})
+            self.sy_f_case2 = sy_f.subs(params_case2)
+
+            self.sy_f_x_case2 = self.sy_f_case2.jacobian(x).subs(params_case2)
+            self.sy_f_u_case2 = self.sy_f_case2.jacobian(u).subs(params_case2)
+
+            self._f_case2 = sy.lambdify(
+                args,
+                self.sy_f_case2
+            )
+
+            self._f_x_case2 = sy.lambdify(
+                args,
+                self.sy_f_x_case2
+            )
+
+            self._f_u_case2 = sy.lambdify(
+                args,
+                self.sy_f_u_case2
+            )
+
+    def f(self, t, x, u):
+        """Compute x_dot"""
+        if not u[0] == 0 or self.const_u1 is not None:
+            return self._f_case1(t, x, u).ravel()
+        
+        elif u[0] == 0 and x[2] == 0:
+            return self._f_case2(t, x, u).ravel()
+        
+        else:
+            raise ValueError("f is nan when $u_1 = 0$ and $T_1 \\neq 0$")
+        
+    def f_x(self, t, x, u):
+        """compute numerical jacobian of f with respect to x"""
+        if not u[0] == 0 or self.const_u1 is not None:
+            return self._f_x_case1(t, x, u)
+        
+        elif u[0] == 0 and x[2] == 0:
+            return self._f_x_case2(t, x, u)
+        
+        else:
+            raise ValueError("f is nan when $u_1 = 0$ and $T_1 \\neq 0$")
+        
+    def f_u(self, t, x, u):
+        """Compute numerical jacobian of f with respect to u"""
+        if not u[0] == 0 or self.const_u1 is not None:
+            return self._f_u_case1(t, x, u)
+        
+        elif u[0] == 0 and x[2] == 0:
+            return self._f_u_case2(t, x, u)
+        
+        else:
+            raise ValueError("f is nan when $u_1 = 0$ and $T_1 \\neq 0$")
+
 
 
 ### NUMERICAL MODEL IMPLEMENTATION
