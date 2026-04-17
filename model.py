@@ -427,7 +427,7 @@ def sy_params_dynamic(seasonal=True, reintroduction=False):
     
     else:
         if reintroduction:
-            epsilon, delta1, alpha, beta, theta = sy_params_dynamic_names(reintroduction=True)[:6]
+            epsilon, delta1, alpha, beta, theta = sy_params_dynamic_names(reintroduction=True)[:5]
 
         else:
             # theta is a dummy variable at this point that we don't need if 
