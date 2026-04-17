@@ -58,7 +58,7 @@ def default_params2(seasonal=True, const_u1=None):
     # static parameters
     statics = dict(zip(
         sy_params_static2(),   # d2, gamma, zeta, phi, a, b
-        [0.1, 0.1, 0.15, 1., .25, .25]   # TODO: get acutal params for d2, phi, a, b
+        [0.1, 0.1, 0.15, 1., 1, 2]   # TODO: get acutal params for d2, phi, a, b
     ))
     params.update(statics)
 
@@ -74,26 +74,26 @@ def default_params2(seasonal=True, const_u1=None):
         dynamics = dict()
 
         alphas = dict(zip(
-            "a1_0, w_a1, p_a1, a2_0, w_a2, p_a2".split(','),
-            [0.000025, 0.5, 1.25*np.pi, 0.000025, 0.5, 1.25*np.pi]    # TODO: get actual parameters a1
+            "a1_0, w_a1, p_a1".split(','),
+            [0.000025, 0.5, 1.25*np.pi]    # young get sick twice as much as old, everything else is the same
         ))
         dynamics.update(alphas)
         
         betas = dict(zip(
             "b_0, w_b, p_b".split(','),
-            [0.0020, 0.86, np.pi]    # TODO: get actual parameters
+            [0.0020, 0.86, np.pi]    
         ))
         dynamics.update(betas)
 
         deltas = dict(zip(
             "d_0, w_d, p_d".split(','),
-            [0.0020, 0.86, np.pi]    # TODO: get actual parameters
+            [2, 1, np.pi / 2]    # high rate is 2 per adult, scaled down by one because low rate is 0, high in the spring
         ))
         dynamics.update(deltas)
 
         epsilons = dict(zip(
             "e_0, w_e, p_e".split(','),
-            [0.0020, 0.86, np.pi]    # TODO: get actual parameters
+            [0.000025, 0.025, 1.25*np.pi]    # this one is kind of guesswork, same x-shift and amplitude as normal but half the y-shift
         ))
         dynamics.update(epsilons)
 
