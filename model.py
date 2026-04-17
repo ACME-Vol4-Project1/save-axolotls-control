@@ -167,6 +167,8 @@ class Model2():
         temp_params = default_params2(seasonal=seasonal)
         if params:
             temp_params.update(params)
+        if const_u1 is not None:
+            temp_params['u1'] = const_u1
         self.params = temp_params
 
         # construct sympy expressions and fill in parameters
