@@ -4,14 +4,14 @@ import sympy as sy
 def sy_params_static(reintroduction=False):
     """Standardized parameter names: γ,ζ,η"""
     if reintroduction:
-        return sy.symbols("d2, gamma, zeta, phi, a, b")
+        return sy.symbols("d2, gamma, zeta, a, b")
     else:
         return sy.symbols("γ,ζ,η")
 
 def sy_params_dynamic_names(reintroduction=False):
     """Standardized parameter names: α,β,θ,ξ,K"""
     if reintroduction:
-        return sy.symbols("eps, d1, alpha, beta, theta, nu, K")
+        return sy.symbols("eps, d1, alpha, beta, phi, theta, nu, K")
     else:
         return sy.symbols("α,β,θ,ξ,K")
 

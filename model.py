@@ -64,8 +64,8 @@ class Model():
         # this situation may produce unstable results, to analyze later.
 
         # Cases 1: u1 is nonzero
-        self.sy_f_x = sy_f.jacobian(x).subs(params)
-        self.sy_f_u = sy_f.jacobian(u).subs(params)
+        self.sy_f_x = sy_f.jacobian(x).subs(self.params)
+        self.sy_f_u = sy_f.jacobian(u).subs(self.params)
 
         self._f_case1 = sy.lambdify(
             args,
@@ -174,7 +174,7 @@ class Model2():
             sy_f = sy_f_full(seasonal=seasonal, reintroduction=True)[:-1, :]
         else:
             sy_f = sy_f_full(seasonal=seasonal, reintroduction=True)
-        self.sy_f = sy_f.subs(params)
+        self.sy_f = sy_f.subs(self.params)
 
         # define model functions
         t = sy_vars_temporal()
@@ -191,8 +191,8 @@ class Model2():
         # and u1 and T are both zero. Raise exeption when u1 is zero but T is nonzero
 
         # Case 1: u1 is nonzero
-        self.sy_f_x = sy_f.jacobian(x).subs(params)    # get jacobians
-        self.sy_f_u = sy_f.jacobian(u).subs(params)
+        self.sy_f_x = sy_f.jacobian(x).subs(self.params)    # get jacobians
+        self.sy_f_u = sy_f.jacobian(u).subs(self.params)
 
         self._f_case1 = sy.lambdify(
             args,
@@ -211,7 +211,7 @@ class Model2():
 
         # Case 2: T1 and u1 are both zero (when u1 is not constant)
         if const_u1 is None:
-            params_case2 = deepcopy(params)
+            params_case2 = deepcopy(self.params)
             params_case2.update({"zeta": 0})
             self.sy_f_case2 = sy_f.subs(params_case2)
 
@@ -344,8 +344,8 @@ def sy_f_simple(reintroduction=False):
     if reintroduction:
         # import sympy symbolic variables
         S1, S2, V, I, T, D = sy_vars_model(reintroduction=True)
-        eps, d1, alpha, beta, theta, nu, K = sy_params_dynamic_names(reintroduction=True)
-        d2, gamma, zeta, phi, a, b = sy_params_static2()
+        eps, d1, alpha, beta, phi, theta, nu, K = sy_params_dynamic_names(reintroduction=True)
+        d2, gamma, zeta, a, b = sy_params_static2()
 
         # define transition equations
         dS1 = d1 * (S2 + V + I + T) - phi * S1 - 2 * alpha * S1 * I - b * eps * S1 - a * d2 * S1 - zeta * S1 * (1 - (T / (K - zeta * V)))
@@ -412,9 +412,10 @@ def sy_params_dynamic(seasonal=True, reintroduction=False):
 
             # construct birth and death rates
             delta1 = sinu(*sy.symbols("d_0, w_d, p_d"))
+            phi = sinu(*sy.symbols("phi_0, w_phi, p_phi"))
             beta = sinu(*sy.symbols("b_0, w_b, p_b"))
 
-            return [epsilon, delta1, alpha, beta, theta, nu, K]
+            return [epsilon, delta1, alpha, beta, phi, theta, nu, K]
 
         else:
             # construct alpha: periodic sinusoidal
@@ -427,7 +428,8 @@ def sy_params_dynamic(seasonal=True, reintroduction=False):
     
     else:
         if reintroduction:
-            epsilon, delta1, alpha, beta, theta = sy_params_dynamic_names(reintroduction=True)[:5]
+            epsilon, delta1, alpha, beta, phi, theta = sy_params_dynamic_names(reintroduction=True)[:6]
+            return [epsilon, delta1, alpha, beta, phi, theta, nu, K]
 
         else:
             # theta is a dummy variable at this point that we don't need if 
