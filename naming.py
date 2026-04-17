@@ -46,8 +46,7 @@ def sy_params_dynamic_names2():
     """Parameters that depend on season or control.
         - eps: spontaneous infection rate (from water or other species)
         - d1: birth rate
-        - a1: infection rate of juvenile frogs
-        - a2: infection rate of mature frogs
+        - alpha: infection rate of mature frogs
         - beta: death rate from infection
         - phi: rate of juvenile frogs surviving to maturity
         - theta: helps define seasonality
