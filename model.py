@@ -350,9 +350,9 @@ def sy_f_simple(reintroduction=False):
         # define transition equations
         dS1 = d1 * (S2 + V + I + T) - phi * S1 - 2 * alpha * S1 * I - b * eps * S1 - a * d2 * S1 - zeta * S1 * (1 - (T / (K - zeta * V)))
         dS2 = phi * S1 - (alpha * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
-        dI = (alpha * I + eps) * S2 + (2 * alpha * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
+        dI = (alpha * I + eps) * S2 + (2 * alpha * I + b * eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
         dV = nu * V - d2 * V - zeta * V * (1 - (T / K)) + gamma * T * (V / (S2 + I + V))                                     # is the current setup a good proxy?
-        dT = zeta * (I + b * S1 + S2 + V) * (1 - (T / K)) - gamma * T
+        dT = zeta * (I + S1 + S2 + V) * (1 - (T / K)) - gamma * T
         dD = a * d2 * S1 + d2 * S2 + beta * I
 
         return sy.Matrix([dS1, dS2, dI, dV, dT, dD])
