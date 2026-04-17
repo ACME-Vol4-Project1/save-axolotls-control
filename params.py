@@ -57,8 +57,8 @@ def default_params2(seasonal=True, const_u1=None):
 
     # static parameters
     statics = dict(zip(
-        sy_params_static2(),   # d2, gamma, zeta, phi, a, b
-        [0.1, 0.1, 0.15, 1., 1, 2]   # TODO: get acutal params for d2, phi, a, b
+        sy_params_static2(),   # d2, gamma, zeta, a, b
+        [0.01, 0.1, 0.15, 1, 2]   # maybe 1/100 die each day? 
     ))
     params.update(statics)
 
@@ -91,6 +91,12 @@ def default_params2(seasonal=True, const_u1=None):
         ))
         dynamics.update(deltas)
 
+        phis = dict(zip(
+            "phi_0, w_phi, p_phi".split(','),
+            [.5, 0, np.pi / 2]    # half grow up each season?
+        ))
+        dynamics.update(phis)
+
         epsilons = dict(zip(
             "e_0, w_e, p_e".split(','),
             [0.000025, 0.025, 1.25*np.pi]    # this one is kind of guesswork, same x-shift and amplitude as normal but half the y-shift
@@ -100,7 +106,7 @@ def default_params2(seasonal=True, const_u1=None):
     else:
         dynamics = dict(zip(
             sy_params_dynamic_names2()[:5],
-            [0.0001, 100, 0.00035, 0.000035, 0.003]
+            [0.0001, 2, 0.500025, 0.99, 0.005]
         ))
 
     params.update(dynamics)

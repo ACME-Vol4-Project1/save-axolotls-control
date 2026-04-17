@@ -38,10 +38,9 @@ def sy_params_static2():
         - d2: natural death rate of mature frogs
         - gamma: rate of frogs leaving saunas
         - zeta: rate of frogs entering saunas
-        - phi: rate of juvenile frogs surviving to maturity
         - a, b: scaling factor for juvenile frogs death rate and treatment rate
     """
-    return sy.symbols("d2, gamma, zeta, phi, a, b")
+    return sy.symbols("d2, gamma, zeta, a, b")
 
 def sy_params_dynamic_names2():
     """Parameters that depend on season or control.
@@ -50,11 +49,12 @@ def sy_params_dynamic_names2():
         - a1: infection rate of juvenile frogs
         - a2: infection rate of mature frogs
         - beta: death rate from infection
+        - phi: rate of juvenile frogs surviving to maturity
         - theta: helps define seasonality
         - nu: rate of introduction of vaccinated frogs
         - K: carrying capacity of frog saunas
     """
-    return sy.symbols("eps, d1, a1, a2, beta, theta, nu, K")
+    return sy.symbols("eps, d1, alpha, beta, phi, theta, nu, K")
 
 def sy_vars_model2():
     """Model compartment names
