@@ -344,13 +344,13 @@ def sy_f_simple(reintroduction=False):
     if reintroduction:
         # import sympy symbolic variables
         S1, S2, V, I, T, D = sy_vars_model(reintroduction=True)
-        eps, d1, a1, a2, beta, theta, nu, K = sy_params_dynamic_names(reintroduction=True)
+        eps, d1, alpha, beta, theta, nu, K = sy_params_dynamic_names(reintroduction=True)
         d2, gamma, zeta, phi, a, b = sy_params_static2()
 
         # define transition equations
-        dS1 = d1 * (S2 + V + I + T) - phi * S1 - a1 * S1 * I - eps * S1 - a * d2 * S1 - b * zeta * S1 * (1 - (T / (K - zeta * V)))
-        dS2 = phi * S1 - (a2 * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
-        dI = (a2 * I + eps) * S2 + (a1 * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
+        dS1 = d1 * (S2 + V + I + T) - phi * S1 - 2 * alpha * S1 * I - b * eps * S1 - a * d2 * S1 - zeta * S1 * (1 - (T / (K - zeta * V)))
+        dS2 = phi * S1 - (alpha * I + eps) * S2 - d2 * S2 - zeta * S2 * (I - (T / (K - zeta * V))) + gamma * T  # TODO: figure out a good way to incorporate vaccinated frogs going into frog saunas
+        dI = (alpha * I + eps) * S2 + (2 * alpha * I + eps) * S1 - beta * I                                                            # need to either adjust the carrying capacity or find a way to separately account for vaccinated frogs entering and leaving
         dV = nu * V - d2 * V - zeta * V * (1 - (T / K)) + gamma * T * (V / (S2 + I + V))                                     # is the current setup a good proxy?
         dT = zeta * (I + b * S1 + S2 + V) * (1 - (T / K)) - gamma * T
         dD = a * d2 * S1 + d2 * S2 + beta * I
@@ -407,15 +407,14 @@ def sy_params_dynamic(seasonal=True, reintroduction=False):
 
         if reintroduction:
             # construct infection rates
-            alpha1 = sinu(*sy.symbols("a1_0, w_a1, p_a1"))
-            alpha2 = sinu(*sy.symbols("a2_0, w_a2, p_a2"))
+            alpha = sinu(*sy.symbols("a1_0, w_a1, p_a1"))
             epsilon = sinu(*sy.symbols("e_0, w_e, p_e"))
 
             # construct birth and death rates
             delta1 = sinu(*sy.symbols("d_0, w_d, p_d"))
             beta = sinu(*sy.symbols("b_0, w_b, p_b"))
 
-            return [epsilon, delta1, alpha1, alpha2, beta, theta, nu, K]
+            return [epsilon, delta1, alpha, beta, theta, nu, K]
 
         else:
             # construct alpha: periodic sinusoidal
@@ -428,7 +427,7 @@ def sy_params_dynamic(seasonal=True, reintroduction=False):
     
     else:
         if reintroduction:
-            epsilon, delta1, alpha1, alpha2, beta, theta = sy_params_dynamic_names(reintroduction=True)[:6]
+            epsilon, delta1, alpha, beta, theta = sy_params_dynamic_names(reintroduction=True)[:6]
 
         else:
             # theta is a dummy variable at this point that we don't need if 

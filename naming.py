@@ -11,7 +11,7 @@ def sy_params_static(reintroduction=False):
 def sy_params_dynamic_names(reintroduction=False):
     """Standardized parameter names: α,β,θ,ξ,K"""
     if reintroduction:
-        return sy.symbols("eps, d1, a1, a2, beta, theta, nu, K")
+        return sy.symbols("eps, d1, alpha, beta, theta, nu, K")
     else:
         return sy.symbols("α,β,θ,ξ,K")
 
