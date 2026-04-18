@@ -53,6 +53,8 @@ class Model():
         u = sy_vars_control()
         if const_u1 is not None:
             u = [u[1]] # get rid of the u1 control variable if it is being held constant
+            if const_u1 > 0:
+                self.sy_f = self.sy_f.subs({"u1":const_u1})
         args = [t, x, u]
 
 
@@ -66,6 +68,7 @@ class Model():
         # Cases 1: u1 is nonzero
         self.sy_f_x = sy_f.jacobian(x).subs(self.params)
         self.sy_f_u = sy_f.jacobian(u).subs(self.params)
+
 
         self._f_case1 = sy.lambdify(
             args,
@@ -85,12 +88,15 @@ class Model():
         # NOTE: if const_u1 == 0, zeta is set to 0 in the params file so it is automatically taken care of
 
         # Cases 2: T1 and u1 are both zero
-        if const_u1 is None:    # NOTE: this is called in self.f when u1 = 0 and T = 0 at a specific timestep
+        if const_u1 is None or const_u1 == 0:    # NOTE: this is called in self.f when u1 = 0 and T = 0 at a specific timestep
             params_case2 = deepcopy(params)
             params_case2.update({"ζ": 0})
-            self.sy_f_case2 = sy_f.subs(params_case2)
+            temp = sy_f.subs(params_case2)
+            self.sy_f_case2 = temp.subs({"u1": 0})
+            print(self.sy_f_case2)
 
             self.sy_f_x_case2 = self.sy_f_case2.jacobian(x).subs(params_case2)
+            print(self.sy_f_x_case2)
             self.sy_f_u_case2 = self.sy_f_case2.jacobian(u).subs(params_case2)
 
             self._f_case2 = sy.lambdify(
@@ -110,10 +116,10 @@ class Model():
 
     def f(self, t, x, u):
         """Compute numerical jacobian of f with respect to x"""
-        if not u[0] == 0 or self.const_u1 is not None:    # when u1 is nonzero at the time step or is fixed
+        if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_case1(t, x, u).ravel() # ravel so it's not a 2d array
         
-        elif u[0] == 0 and x[2] == 0:    # when u1 = 0 and T = 0
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
             return self._f_case2(t, x, u).ravel() # ravel so it's not a 2d array
         
         else:
@@ -121,10 +127,10 @@ class Model():
 
     def f_x(self, t, x, u):
         """Compute numerical jacobian of f with respect to x"""
-        if not u[0] == 0 or self.const_u1 is not None:
+        if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_x_case1(t, x, u)
         
-        elif u[0] == 0 and x[2] == 0:
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
             return self._f_x_case2(t, x, u)
         
         else:
@@ -132,10 +138,10 @@ class Model():
 
     def f_u(self, t, x, u):
         """Compute numerical jacobian of f with respect to u"""
-        if not u[0] == 0 or self.const_u1 is not None:
+        if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_u_case1(t, x, u)
         
-        elif u[0] == 0 and x[2] == 0:
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
             return self._f_u_case2(t, x, u)
         
         else:
