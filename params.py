@@ -65,7 +65,7 @@ def default_params2(seasonal=True, const_u1=None):
     # check for fixed value of u1
     if const_u1 is not None:
         if const_u1 == 0:
-            params["gamma"] = 0
+            params["zeta"] = 0
         else:
             params[sy_vars_control()[0]] = const_u1   # fixed u1
 

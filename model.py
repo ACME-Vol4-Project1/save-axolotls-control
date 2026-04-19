@@ -172,7 +172,8 @@ class Model2():
         if params:
             temp_params.update(params)
         if const_u1 is not None:
-            temp_params['u1'] = const_u1
+            if const_u1 == 0:
+                temp_params['zeta'] = 0
         self.params = temp_params
 
         # construct sympy expressions and fill in parameters
@@ -181,6 +182,7 @@ class Model2():
         else:
             sy_f = sy_f_full(seasonal=seasonal, reintroduction=True)
         self.sy_f = sy_f.subs(self.params)
+
 
         # define model functions
         t = sy_vars_temporal()
@@ -199,23 +201,24 @@ class Model2():
         # and u1 and T are both zero. Raise exeption when u1 is zero but T is nonzero
 
         # Case 1: u1 is nonzero
-        self.sy_f_x = sy_f.jacobian(x).subs(self.params)    # get jacobians
-        self.sy_f_u = sy_f.jacobian(u).subs(self.params)
+        if const_u1 is None or const_u1 > 0:
+            self.sy_f_x = sy_f.jacobian(x).subs(self.params)    # get jacobians
+            self.sy_f_u = sy_f.jacobian(u).subs(self.params)
 
-        self._f_case1 = sy.lambdify(
-            args,
-            self.sy_f
-        )
+            self._f_case1 = sy.lambdify(
+                args,
+                self.sy_f
+            )
 
-        self._f_x_case1 = sy.lambdify(
-            args,
-            self.sy_f_x
-        )
+            self._f_x_case1 = sy.lambdify(
+                args,
+                self.sy_f_x
+            )
 
-        self._f_u_case1 = sy.lambdify(
-            args,
-            self.sy_f_u
-        )
+            self._f_u_case1 = sy.lambdify(
+                args,
+                self.sy_f_u
+            )
 
         # Case 2: T1 and u1 are both zero (when u1 is not constant)
         if const_u1 is None or const_u1 == 0:
@@ -247,7 +250,7 @@ class Model2():
         if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_case1(t, x, u).ravel()
         
-        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[4] == 0:
             return self._f_case2(t, x, u).ravel()
         
         else:
@@ -258,7 +261,7 @@ class Model2():
         if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_x_case1(t, x, u)
         
-        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[4] == 0:
             return self._f_x_case2(t, x, u)
         
         else:
@@ -269,7 +272,7 @@ class Model2():
         if ((self.const_u1 is not None) and self.const_u1 > 0) or (self.const_u1 is None and u[0] > 0):
             return self._f_u_case1(t, x, u)
         
-        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[2] == 0:
+        elif (((self.const_u1 is not None) and self.const_u1 == 0) or (self.const_u1 is None and u[0] == 0)) and x[4] == 0:
             return self._f_u_case2(t, x, u)
         
         else:
